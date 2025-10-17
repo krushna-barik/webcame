@@ -1,89 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RTSP QR Code Generator</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
-      color: #facc15;
-    }
-    input {
-      padding: 10px;
-      width: 320px;
-      border-radius: 8px;
-      border: none;
-      font-size: 1rem;
-    }
-    button {
-      padding: 10px 18px;
-      margin-top: 15px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background-color: #10b981;
-      color: white;
-    }
-    button:hover {
-      background-color: #059669;
-    }
-    #qrcode {
-      margin-top: 30px;
-      background: white;
-      padding: 12px;
-      border-radius: 10px;
-    }
-    footer {
-      position: absolute;
-      bottom: 20px;
-      font-size: 0.9rem;
-      color: #94a3b8;
-    }
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTSP Link Generator via QR</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #1a2a6c;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .description {
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .qr-container {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .generated-link {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px dashed #1a2a6c;
+            display: none;
+        }
+        
+        .instructions {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #1a2a6c;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 15px;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+            display: none;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1a2a6c;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            border-color: #1a2a6c;
+            outline: none;
+        }
+        
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            border-radius: 10px;
+            color: #666;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-  <h1>RTSP → QR Code Generator</h1>
+    <div class="container">
+        <h1>RTSP Link Generator</h1>
+        <p class="description">Scan the QR code below with your phone to generate an RTSP link using your phone's IP address.</p>
+        
+        <div class="qr-container">
+            <h2>Scan This QR Code</h2>
+            <div id="qrcode"></div>
+            <p>Use your phone's camera or QR scanner app</p>
+        </div>
+        
+        <div class="status info" id="statusMessage">
+            Waiting for QR code scan...
+        </div>
+        
+        <div class="generated-link" id="generatedLink"></div>
+        
+        <div class="form-group" id="credentialsForm">
+            <h3>Enter Camera Credentials</h3>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" placeholder="e.g., admin">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="e.g., password123">
+            </div>
+            
+            <div class="form-group">
+                <label for="port">Port:</label>
+                <input type="text" id="port" placeholder="e.g., 554" value="554">
+            </div>
+            
+            <div class="form-group">
+                <label for="stream">Stream Path:</label>
+                <input type="text" id="stream" placeholder="e.g., /stream" value="/stream">
+            </div>
+            
+            <button class="btn" id="generateLinkBtn">Generate RTSP Link</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>How it works:</h3>
+            <ol>
+                <li>Scan the QR code with your phone</li>
+                <li>Your phone will detect its IP address</li>
+                <li>Enter your camera credentials</li>
+                <li>Generate the RTSP link for your camera</li>
+                <li>Use this link in your preferred application</li>
+            </ol>
+        </div>
+        
+        <div class="footer">
+            <p>Note: Your phone and the device using the RTSP link must be on the same network</p>
+        </div>
+    </div>
 
-  <input type="text" id="rtspInput" placeholder="Enter RTSP URL (e.g. rtsp://user:pass@192.168.1.50:554/stream)">
-  <button onclick="generateQR()">Generate QR</button>
-
-  <div id="qrcode"></div>
-
-  <footer>Made by Krushna 🔥</footer>
-
-  <script>
-    function generateQR() {
-      const url = document.getElementById('rtspInput').value.trim();
-      if (!url.startsWith('rtsp://')) {
-        alert('Please enter a valid RTSP URL!');
-        return;
-      }
-      const qrContainer = document.getElementById('qrcode');
-      qrContainer.innerHTML = ''; // clear old QR
-      new QRCode(qrContainer, {
-        text: url,
-        width: 200,
-        height: 200,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    }
-  </script>
+    <script>
+        // Generate initial QR code that points to this page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUrl = window.location.href;
+            const qrContainer = document.getElementById('qrcode');
+            
+            // Clear any existing content
+            qrContainer.innerHTML = '';
+            
+            // Create QR code
+            QRCode.toCanvas(qrContainer, currentUrl, {
+                width: 200,
+                margin: 1,
+                color: {
+                    dark: '#1a2a6c',
+                    light: '#ffffff'
+                }
+            }, function(error) {
+                if (error) {
+                    console.error(error);
+                    // If QR code generation fails, show a placeholder
+                    qrContainer.innerHTML = '<div class="qr-placeholder">QR Code Error</div>';
+                } else {
+                    console.log('QR code generated successfully');
+                }
+            });
+            
+            // Check if we have URL parameters (indicating a redirect back from phone)
+            const urlParams = new URLSearchParams(window.location.search);
+            const phoneIp = urlParams.get('ip');
+            
+            if (phoneIp) {
+                document.getElementById('statusMessage').textContent = 'Phone IP detected: ' + phoneIp;
+                document.getElementById('statusMessage').className = 'status success';
+                document.getElementById('credentialsForm').style.display = 'block';
+                
+                // Store the IP for later use
+                window.detectedIp = phoneIp;
+            }
+            
+            // Handle RTSP link generation
+            document.getElementById('generateLinkBtn').addEventListener('click', function() {
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value.trim();
+                const port = document.getElementById('port').value.trim();
+                const stream = document.getElementById('stream').value.trim();
+                
+                if (!window.detectedIp) {
+                    alert('No IP address detected. Please scan the QR code again.');
+                    return;
+                }
+                
+                // Build the RTSP URL
+                let rtspUrl = 'rtsp://';
+                
+                if (username && password) {
+                    rtspUrl += `${username}:${password}@`;
+                }
+                
+                rtspUrl += window.detectedIp;
+                
+                if (port) {
+                    rtspUrl += `:${port}`;
+                }
+                
+                if (stream) {
+                    // Ensure stream path starts with a slash
+                    rtspUrl += stream.startsWith('/') ? stream : `/${stream}`;
+                }
+                
+                // Display the generated link
+                const linkElement = document.getElementById('generatedLink');
+                linkElement.textContent = rtspUrl;
+                linkElement.style.display = 'block';
+                
+                // Update status message
+                document.getElementById('statusMessage').textContent = 'RTSP link generated successfully!';
+            });
+        });
+    </script>
 </body>
 </html>
