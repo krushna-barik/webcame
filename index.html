@@ -3,317 +3,400 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RTSP Link Generator via QR</title>
+    <title>📱 RTSP QR Generator - Single Page</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { 
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px; 
         }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+        .container { 
+            background-color: rgba(255, 255, 255, 0.95); 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
+            width: 100%; 
+            max-width: 500px; 
+            padding: 30px; 
+            text-align: center; 
         }
-        
-        .container {
-            background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 500px;
-            padding: 30px;
-            text-align: center;
+        h1 { color: #1a2a6c; margin-bottom: 20px; font-size: 28px; }
+        .description { color: #333; margin-bottom: 25px; line-height: 1.6; }
+        .qr-container { 
+            margin: 25px 0; 
+            padding: 20px; 
+            background-color: white; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); 
         }
-        
-        h1 {
-            color: #1a2a6c;
-            margin-bottom: 20px;
-            font-size: 28px;
+        #qrcode { display: flex; justify-content: center; margin: 15px 0; }
+        .generated-link { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background-color: #f0f8ff; 
+            border-radius: 8px; 
+            word-break: break-all; 
+            font-family: monospace; 
+            font-size: 14px; 
+            border: 1px dashed #1a2a6c; 
+            display: none; 
         }
-        
-        .description {
-            color: #333;
-            margin-bottom: 25px;
-            line-height: 1.6;
+        .instructions { 
+            background-color: #e8f4fd; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-top: 20px; 
+            text-align: left; 
         }
-        
-        .qr-container {
-            margin: 25px 0;
-            padding: 20px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        .instructions h3 { color: #1a2a6c; margin-bottom: 10px; }
+        .instructions ol { padding-left: 20px; }
+        .instructions li { margin-bottom: 8px; line-height: 1.5; }
+        .footer { margin-top: 20px; color: #666; font-size: 14px; }
+        .btn { 
+            background: linear-gradient(to right, #1a2a6c, #b21f1f); 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: transform 0.3s, box-shadow 0.3s; 
+            margin-top: 15px; 
+            display: inline-block; 
         }
-        
-        #qrcode {
-            display: flex;
-            justify-content: center;
-            margin: 15px 0;
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+        .btn:disabled { 
+            background: #cccccc; 
+            cursor: not-allowed; 
+            transform: none; 
+            box-shadow: none; 
         }
-        
-        .generated-link {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f0f8ff;
-            border-radius: 8px;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 14px;
-            border: 1px dashed #1a2a6c;
-            display: none;
+        .status { margin: 15px 0; padding: 10px; border-radius: 5px; font-weight: 500; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #1a2a6c; }
+        input { 
+            width: 100%; 
+            padding: 12px 15px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            transition: border-color 0.3s; 
         }
-        
-        .instructions {
-            background-color: #e8f4fd;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            text-align: left;
+        input:focus { border-color: #1a2a6c; outline: none; }
+        .qr-placeholder { 
+            width: 200px; height: 200px; 
+            background-color: #f5f5f5; 
+            display: flex; justify-content: center; align-items: center; 
+            margin: 0 auto; 
+            border-radius: 10px; 
+            color: #666; 
+            font-weight: bold; 
         }
-        
-        .instructions h3 {
-            color: #1a2a6c;
-            margin-bottom: 10px;
+        #phoneScanner { display: none; }
+        .phone-title { font-size: 24px; color: white; }
+        .phone-ip { font-size: 28px; background: white; color: #333; padding: 20px; border-radius: 15px; margin: 20px 0; font-weight: bold; }
+        .phone-btn { background: #4ecdc4; margin: 10px; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; margin-right: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .app-badge { 
+            display: inline-block; 
+            background: #1a2a6c; 
+            color: white; 
+            padding: 8px 15px; 
+            border-radius: 20px; 
+            margin: 10px 0; 
+            font-weight: bold; 
         }
-        
-        .instructions ol {
-            padding-left: 20px;
-        }
-        
-        .instructions li {
-            margin-bottom: 8px;
-            line-height: 1.5;
-        }
-        
-        .footer {
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .btn {
-            background: linear-gradient(to right, #1a2a6c, #b21f1f);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            margin-top: 15px;
-            display: inline-block;
-        }
-        
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .status {
-            margin: 15px 0;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: 500;
-        }
-        
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-            display: none;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #1a2a6c;
-        }
-        
-        input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        input:focus {
-            border-color: #1a2a6c;
-            outline: none;
-        }
-        
-        .qr-placeholder {
-            width: 200px;
-            height: 200px;
-            background-color: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto;
-            border-radius: 10px;
-            color: #666;
-            font-weight: bold;
-        }
+        .app-badge a { color: white; text-decoration: none; }
+        .app-badge a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>RTSP Link Generator</h1>
-        <p class="description">Scan the QR code below with your phone to generate an RTSP link using your phone's IP address.</p>
-        
-        <div class="qr-container">
-            <h2>Scan This QR Code</h2>
-            <div id="qrcode"></div>
-            <p>Use your phone's camera or QR scanner app</p>
-        </div>
-        
-        <div class="status info" id="statusMessage">
-            Waiting for QR code scan...
-        </div>
-        
-        <div class="generated-link" id="generatedLink"></div>
-        
-        <div class="form-group" id="credentialsForm">
-            <h3>Enter Camera Credentials</h3>
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" id="username" placeholder="e.g., admin">
+        <!-- DESKTOP VIEW -->
+        <div id="desktopView">
+            <h1>📷 RTSP Link Generator</h1>
+            <p class="description">Scan QR with phone → Auto-detect IP → Generate RTSP link for camera stream</p>
+           
+            <div class="qr-container">
+                <h2>📱 Scan This QR Code</h2>
+                <div id="qrcode"></div>
+                <p>Same WiFi required | Use phone camera</p>
             </div>
-            
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" placeholder="e.g., password123">
+           
+            <div class="status info" id="statusMessage">Waiting for phone scan...</div>
+           
+            <div class="generated-link" id="generatedLink"></div>
+           
+            <div class="form-group" id="credentialsForm" style="display: none;">
+                <h3>🔐 Enter Camera Credentials</h3>
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" placeholder="e.g., admin">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="e.g., password123">
+                </div>
+                <div class="form-group">
+                    <label for="port">Port:</label>
+                    <input type="text" id="port" placeholder="554" value="554">
+                </div>
+                <div class="form-group">
+                    <label for="stream">Stream Path:</label>
+                    <input type="text" id="stream" placeholder="/stream" value="/stream">
+                </div>
+                <button class="btn" id="generateLinkBtn">🚀 Generate RTSP Link</button>
             </div>
-            
-            <div class="form-group">
-                <label for="port">Port:</label>
-                <input type="text" id="port" placeholder="e.g., 554" value="554">
+           
+            <div class="instructions">
+                <h3>⚡ How it works (3 seconds):</h3>
+                <ol>
+                    <li><strong>Scan QR</strong> with phone camera</li>
+                    <li><strong>Auto IP detect</strong> (same WiFi)</li>
+                    <li><strong>Enter credentials</strong> here</li>
+                    <li><strong>Copy RTSP link</strong> → Use in VLC/OBS</li>
+                </ol>
             </div>
-            
-            <div class="form-group">
-                <label for="stream">Stream Path:</label>
-                <input type="text" id="stream" placeholder="e.g., /stream" value="/stream">
+            <div class="footer">
+                <div class="app-badge">
+                    <a href="https://play.google.com/store/apps/details?id=com.pas.webcam" target="_blank">📱 Install IP Webcam (Android)</a>
+                </div>
+                <p>💡 Install 'IP Webcam' app on phone first!</p>
             </div>
-            
-            <button class="btn" id="generateLinkBtn">Generate RTSP Link</button>
         </div>
-        
-        <div class="instructions">
-            <h3>How it works:</h3>
-            <ol>
-                <li>Scan the QR code with your phone</li>
-                <li>Your phone will detect its IP address</li>
-                <li>Enter your camera credentials</li>
-                <li>Generate the RTSP link for your camera</li>
-                <li>Use this link in your preferred application</li>
-            </ol>
-        </div>
-        
-        <div class="footer">
-            <p>Note: Your phone and the device using the RTSP link must be on the same network</p>
+
+        <!-- PHONE SCANNER VIEW -->
+        <div id="phoneScanner">
+            <h1 class="phone-title">📱 Phone IP Detected!</h1>
+            <div class="phone-ip" id="phoneIpDisplay">Detecting...</div>
+            <button class="btn phone-btn" id="refreshIpBtn">
+                <span class="loading" id="refreshLoading" style="display: none;"></span>
+                🔄 Refresh IP
+            </button>
+            <button class="btn phone-btn" id="generateRtspBtn">✅ Generate RTSP Link</button>
+            <p style="color: white; margin-top: 20px;">Same WiFi with PC required</p>
         </div>
     </div>
 
     <script>
-        // Generate initial QR code that points to this page
+        // 🚀 MAIN LOGIC - SINGLE PAGE
         document.addEventListener('DOMContentLoaded', function() {
-            const currentUrl = window.location.href;
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPhone = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const phoneIp = urlParams.get('ip') || sessionStorage.getItem('phoneIP');
+
+            if (isPhone || phoneIp) {
+                // PHONE MODE
+                showPhoneScanner(phoneIp);
+                setupPhoneScanner();
+            } else {
+                // DESKTOP MODE - Generate QR
+                generateQRCode();
+                setupDesktop();
+            }
+        });
+
+        function generateQRCode() {
+            const scannerUrl = `${window.location.href}?phone=true`;
             const qrContainer = document.getElementById('qrcode');
-            
-            // Clear any existing content
             qrContainer.innerHTML = '';
-            
-            // Create QR code
-            QRCode.toCanvas(qrContainer, currentUrl, {
-                width: 200,
-                margin: 1,
-                color: {
-                    dark: '#1a2a6c',
-                    light: '#ffffff'
-                }
-            }, function(error) {
-                if (error) {
-                    console.error(error);
-                    // If QR code generation fails, show a placeholder
-                    qrContainer.innerHTML = '<div class="qr-placeholder">QR Code Error</div>';
-                } else {
-                    console.log('QR code generated successfully');
-                }
+           
+            QRCode.toCanvas(qrContainer, scannerUrl, {
+                width: 200, margin: 1,
+                color: { dark: '#1a2a6c', light: '#ffffff' }
+            });
+        }
+
+        function showPhoneScanner(ip) {
+            document.getElementById('desktopView').style.display = 'none';
+            document.getElementById('phoneScanner').style.display = 'block';
+            if (ip) {
+                document.getElementById('phoneIpDisplay').textContent = ip;
+                sessionStorage.setItem('phoneIP', ip);
+            }
+            detectLocalIP();
+        }
+
+        function setupPhoneScanner() {
+            document.getElementById('refreshIpBtn').addEventListener('click', function() {
+                document.getElementById('refreshLoading').style.display = 'inline-block';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    detectLocalIP();
+                    document.getElementById('refreshLoading').style.display = 'none';
+                    this.disabled = false;
+                }, 1000);
             });
             
-            // Check if we have URL parameters (indicating a redirect back from phone)
+            document.getElementById('generateRtspBtn').addEventListener('click', generateRTSP);
+        }
+
+        function detectLocalIP() {
+            const ipDisplay = document.getElementById('phoneIpDisplay');
+            ipDisplay.textContent = 'Detecting...';
+
+            // Method 1: Try WebRTC first (most reliable for local IP)
+            const rtc = new RTCPeerConnection({ iceServers: [] });
+            rtc.createDataChannel('');
+            rtc.createOffer().then(offer => rtc.setLocalDescription(offer));
+
+            rtc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    const candidate = event.candidate.candidate;
+                    const ipMatch = /candidate:.* (192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3})/.exec(candidate);
+                    if (ipMatch && ipMatch[1]) {
+                        const localIP = ipMatch[1];
+                        ipDisplay.textContent = localIP;
+                        sessionStorage.setItem('phoneIP', localIP);
+                        rtc.close();
+                        return;
+                    }
+                }
+            };
+
+            // Method 2: Fallback to network interfaces (if available)
+            if (window.RTCPeerConnection && window.RTCPeerConnection.getLocalStreams) {
+                try {
+                    const pc = new RTCPeerConnection();
+                    pc.createDataChannel('');
+                    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                    
+                    pc.onicecandidate = (ice) => {
+                        if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+                        const myIP = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/.exec(ice.candidate.candidate)[1];
+                        if (myIP && myIP.match(/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/)) {
+                            ipDisplay.textContent = myIP;
+                            sessionStorage.setItem('phoneIP', myIP);
+                            pc.close();
+                        }
+                    };
+                } catch (e) {
+                    console.log("WebRTC method failed:", e);
+                }
+            }
+
+            // Method 3: Final fallback to public IP (not ideal but better than nothing)
+            setTimeout(() => {
+                if (ipDisplay.textContent === 'Detecting...') {
+                    ipDisplay.textContent = 'Use Settings → WiFi → Your IP';
+                    // Fallback to public IP (not local)
+                    fetch('https://api.ipify.org?format=json')
+                        .then(r => r.json())
+                        .then(data => {
+                            ipDisplay.textContent = `Public: ${data.ip} (Check local IP)`;
+                        })
+                        .catch(() => {
+                            ipDisplay.textContent = 'Failed to detect IP';
+                        });
+                }
+            }, 5000);
+        }
+
+        function generateRTSP() {
+            const ip = sessionStorage.getItem('phoneIP') || document.getElementById('phoneIpDisplay').textContent;
+            if (!ip || ip.includes('Detecting') || ip.includes('Public') || ip.includes('Failed')) {
+                alert('❌ Local IP not detected! Check WiFi settings.');
+                return;
+            }
+            // Redirect back to desktop view with the IP as parameter
+            const baseUrl = window.location.href.split('?')[0];
+            window.location.href = `${baseUrl}?ip=${ip}`;
+        }
+
+        function setupDesktop() {
             const urlParams = new URLSearchParams(window.location.search);
             const phoneIp = urlParams.get('ip');
-            
+           
             if (phoneIp) {
-                document.getElementById('statusMessage').textContent = 'Phone IP detected: ' + phoneIp;
+                document.getElementById('statusMessage').textContent = `✅ Phone IP: ${phoneIp}`;
                 document.getElementById('statusMessage').className = 'status success';
                 document.getElementById('credentialsForm').style.display = 'block';
-                
-                // Store the IP for later use
                 window.detectedIp = phoneIp;
             }
-            
-            // Handle RTSP link generation
+
             document.getElementById('generateLinkBtn').addEventListener('click', function() {
                 const username = document.getElementById('username').value.trim();
                 const password = document.getElementById('password').value.trim();
                 const port = document.getElementById('port').value.trim();
                 const stream = document.getElementById('stream').value.trim();
-                
+               
                 if (!window.detectedIp) {
-                    alert('No IP address detected. Please scan the QR code again.');
+                    alert('❌ Scan QR first!');
                     return;
                 }
-                
-                // Build the RTSP URL
+               
+                // Validate inputs
+                if (!port || isNaN(port)) {
+                    alert('❌ Please enter a valid port number');
+                    return;
+                }
+               
                 let rtspUrl = 'rtsp://';
-                
                 if (username && password) {
-                    rtspUrl += `${username}:${password}@`;
+                    rtspUrl += `${encodeURIComponent(username)}:${encodeURIComponent(password)}@`;
                 }
-                
                 rtspUrl += window.detectedIp;
-                
-                if (port) {
-                    rtspUrl += `:${port}`;
-                }
-                
-                if (stream) {
-                    // Ensure stream path starts with a slash
-                    rtspUrl += stream.startsWith('/') ? stream : `/${stream}`;
-                }
-                
-                // Display the generated link
+                if (port) rtspUrl += `:${port}`;
+                if (stream) rtspUrl += stream.startsWith('/') ? stream : `/${stream}`;
+               
                 const linkElement = document.getElementById('generatedLink');
-                linkElement.textContent = rtspUrl;
+                linkElement.innerHTML = `
+                    <strong>🎥 RTSP Link:</strong><br>
+                    <code>${rtspUrl}</code><br>
+                    <button class="btn" onclick="copyToClipboard('${rtspUrl}')" style="margin-top:10px;">📋 Copy</button>
+                    <button class="btn" onclick="testStream('${rtspUrl}')" style="margin-top:10px; background: #4ecdc4;">🔍 Test Stream</button>
+                `;
                 linkElement.style.display = 'block';
-                
-                // Update status message
-                document.getElementById('statusMessage').textContent = 'RTSP link generated successfully!';
+                document.getElementById('statusMessage').textContent = '✅ RTSP Link Ready! Use in VLC/OBS';
             });
-        });
+        }
+
+        // Helper functions
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('✅ Copied to clipboard!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textArea);
+                alert('✅ Copied to clipboard!');
+            });
+        }
+
+        function testStream(rtspUrl) {
+            // This is a simple test that tries to create a video element
+            // Note: Most browsers don't support RTSP directly, but this gives a visual indicator
+            const testWindow = window.open('', '_blank');
+            testWindow.document.write(`
+                <html>
+                <head><title>RTSP Stream Test</title></head>
+                <body style="background: #333; color: white; text-align: center; padding: 20px;">
+                    <h2>RTSP Stream Test</h2>
+                    <p>URL: ${rtspUrl}</p>
+                    <p style="color: orange;">⚠️ Note: Most browsers don't support RTSP directly.</p>
+                    <p>Try opening this URL in VLC Media Player:</p>
+                    <p><code>${rtspUrl}</code></p>
+                    <button onclick="window.close()">Close</button>
+                </body>
+                </html>
+            `);
+            testWindow.document.close();
+        }
     </script>
 </body>
 </html>
