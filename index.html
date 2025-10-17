@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Camera QR → RTSP extractor & QR generator</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;max-width:980px;margin:18px auto;padding:12px;}
+    h1{font-size:1.3rem;margin-bottom:6px;}
+    #video{width:100%;max-height:360px;background:#000;object-fit:cover;border-radius:8px;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+    .card{flex:1 1 320px;padding:10px;border-radius:8px;border:1px solid #ddd;background:#fbfbff;}
+    button{padding:8px 12px;border-radius:6px;border:0;background:#0366d6;color:white;cursor:pointer;}
+    input{width:100%;padding:8px;border-radius:6px;border:1px solid #ccc}
+    small{color:#666}
+    #qrbox{margin-top:8px;padding:10px;border-radius:6px;background:#fff}
+  </style>
+  <!-- ZXing browser lib (for QR scanning) -->
+  <script src="https://unpkg.com/@zxing/browser@1.2.0/umd/index.min.js"></script>
+  <!-- QRCode generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <h1>Scan QR → get RTSP address (and generate QR)</h1>
+  <p><small>Point your camera at the QR. If QR has RTSP (e.g. <code>rtsp://user:pass@192.168.1.50:554/stream</code>), it will be extracted and shown.</small></p>
+
+  <video id="video" autoplay muted playsinline></video>
+
+  <div class="row">
+    <div class="card">
+      <strong>Scanned RTSP URL</strong>
+      <div id="result" style="margin-top:8px;">
+        <input id="rtsp" placeholder="No RTSP scanned yet" />
+        <div style="margin-top:8px;display:flex;gap:8px;">
+          <button id="copyBtn">Copy</button>
+          <button id="openVlc">Open in VLC</button>
+          <button id="genQR">Generate QR</button>
+        </div>
+        <div id="qrbox"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <strong>Controls</strong>
+      <div style="margin-top:8px;">
+        <button id="start">Start Scanner</button>
+        <button id="stop">Stop Scanner</button>
+        <button id="manual">Paste RTSP manually</button>
+      </div>
+
+      <hr />
+
+      <strong>Test stream in browser (info)</strong>
+      <small>Browsers don’t play RTSP directly. Use VLC or set up an RTSP→HLS or RTSP→WebSocket proxy (see README below).</small>
+    </div>
+  </div>
+
+  <script>
+    // Grab elements
+    const { BrowserMultiFormatReader } = ZXingBrowser;
+    const video = document.getElementById('video');
+    const rtspInput = document.getElementById('rtsp');
+    const copyBtn = document.getElementById('copyBtn');
+    const openVlc = document.getElementById('openVlc');
+    const genQR = document.getElementById('genQR');
+    const qrbox = document.getElementById('qrbox');
+    const startBtn = document.getElementById('start');
+    const stopBtn = document.getElementById('stop');
+    const manualBtn = document.getElementById('manual');
+
+    let codeReader;
+    let selectedDeviceId;
+    let stream;
+
+    async function startScanner() {
+      codeReader = new BrowserMultiFormatReader();
+      try {
+        // list devices, pick back camera if present
+        const devices = await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+        // pick last (usually back camera on phone)
+        selectedDeviceId = devices.length ? devices[devices.length-1].deviceId : undefined;
+        // start decoding from video element
+        await codeReader.decodeFromVideoDevice(selectedDeviceId, 'video', (result, err) => {
+          if (result) {
+            handleScannedText(result.getText());
+          }
+          // ignore errors; scanning continues
+        });
+      } catch (e) {
+        console.error('Camera start failed', e);
+        alert('Camera access failed — check permissions or try another browser.');
+      }
+    }
+
+    function stopScanner() {
+      try {
+        if (codeReader) {
+          codeReader.reset();
+          codeReader = null;
+        }
+      } catch (e) { console.warn(e); }
+      // stop media tracks
+      if (video && video.srcObject) {
+        const tracks = video.srcObject.getTracks();
+        for (const t of tracks) t.stop();
+        video.srcObject = null;
+      }
+    }
+
+    function handleScannedText(text) {
+      // If it's an RTSP URL, put it in the input. Otherwise show it anyway.
+      rtspInput.value = text;
+      // generate QR automatically
+      generateQRCode(text);
+    }
+
+    function generateQRCode(text) {
+      qrbox.innerHTML = '';
+      if (!text) return;
+      new QRCode(qrbox, { text, width: 200, height: 200 });
+    }
+
+    copyBtn.addEventListener('click', async () => {
+      const v = rtspInput.value.trim();
+      if (!v) return alert('No RTSP to copy');
+      await navigator.clipboard.writeText(v);
+      alert('Copied to clipboard!');
+    });
+
+    openVlc.addEventListener('click', () => {
+      const v = rtspInput.value.trim();
+      if (!v) return alert('No RTSP to open');
+      // Tell user how to open in VLC (can't launch VLC from browser reliably)
+      const vlcHint = `Open VLC -> Media -> Open Network Stream -> paste:\n\n${v}`;
+      alert(vlcHint);
+    });
+
+    genQR.addEventListener('click', () => {
+      const v = rtspInput.value.trim();
+      if (!v) return alert('No RTSP to generate QR from');
+      generateQRCode(v);
+    });
+
+    startBtn.addEventListener('click', () => {
+      startScanner();
+    });
+
+    stopBtn.addEventListener('click', () => {
+      stopScanner();
+    });
+
+    manualBtn.addEventListener('click', async () => {
+      const text = prompt('Paste your RTSP URL (e.g. rtsp://user:pass@192.168.1.50:554/stream):');
+      if (text) {
+        rtspInput.value = text.trim();
+        generateQRCode(rtspInput.value);
+      }
+    });
+
+    // Try to autoplay camera on load (optional)
+    (async ()=> {
+      // some browsers require a user gesture — so we don't force it
+      // but we will try to show default camera stream as preview
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        video.srcObject = stream;
+        video.play().catch(()=>{});
+      } catch(e){
+        // ignore; user can press Start Scanner
+        console.log('No preview camera available by default', e);
+      }
+    })();
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => stopScanner());
+  </script>
+</body>
+</html>
